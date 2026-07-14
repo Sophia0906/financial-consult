@@ -22,12 +22,21 @@
 - `analyses_index` — 研究目標的索引：`[{slug, displayTarget, lastTime, roundCount}]`
 - `analyses:{slug}` — 單一標的的所有分析：`{displayTarget, rounds:[{time, lenses, results}]}`
 - `saved_ideas` — 已釘選的投資靈感：`[{title, thesis, risk, time}]`
+- `references` — 參考來源卡（消化後的重點，非原文全文）：`[{id, title, source, url, date, summary, tags, time}]`
+
+## 參考來源（references）分頁
+
+存放使用者從外部財經內容（KOL 貼文、文章等）消化後的「引用卡」——只存重點摘要、
+關鍵數據與出處標籤，供本人研究時溯源引用，不存他人原文全文（轉化性使用）。
+兩種產生方式：自己寫，或貼原文請 Claude 濃縮成摘要。標籤（股票代號／賽道關鍵字）
+用於與「研究目標」連動：分析某標的時，工具會依標籤自動帶出相關參考卡當佐證。
 
 ## 待辦（規劃中，預計移交 Cowork 以真實檔案系統實作）
 
 - 配置健檢的本機 .md 存檔與「與上次比對」
 - 投資靈感三來源模式（一般／根據配置／根據今日概況）
 - 今日概況改由 Cowork 排程任務每日自動產出 .md
+- 參考來源卡同步成本機 .md 檔（每張卡一個 `references/日期_來源_標題.md`，由 Cowork 讀 `references` storage 匯出）
 
 ## 免責
 
