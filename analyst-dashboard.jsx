@@ -3,38 +3,68 @@ import {
   Activity, Search, FileText, Layers, Lightbulb, PieChart,
   Scale, AlertTriangle, Compass,
   Loader2, History, Trash2, ChevronDown, Play, RotateCcw, Check, Pin, ArrowUpRight,
+  Sun, Moon, RefreshCw,
 } from 'lucide-react';
 
 /* ============================================================
-   Design tokens
+   Version — bump this on every push to GitHub
    ============================================================ */
-const C = {
-  bgBase: '#0B0D11',
-  bgPanel: '#171A21',
-  bgReadout: '#0A0C10',
-  hairline: '#2A2E37',
-  textPrimary: '#E8E6DE',
-  textMuted: '#8B8F99',
-  accentBrass: '#C08A2E',
-  accentBrassDark: '#1A1200',
-  accentTeal: '#4FD1C5',
-  danger: '#C0524A',
-};
+const APP_VERSION = 'v6.0';
+const APP_DATE = '2026-07-13';
+const REPO_URL = 'https://github.com/Sophia0906/financial-consult';
+const UPDATE_INSTRUCTION =
+  `請從 ${REPO_URL} pull 最新版本，讀取 analyst-dashboard.jsx 開頭的 APP_VERSION，` +
+  `如果比 ${APP_VERSION} 新，就用最新的檔案內容重新建立這個儀表板 artifact。我目前的版本是 ${APP_VERSION}（${APP_DATE}）。`;
+
+/* ============================================================
+   Theming — all colors are CSS variables so dark/light is one class swap
+   ============================================================ */
 const FONT_SANS = "'IBM Plex Sans', -apple-system, sans-serif";
 const FONT_MONO = "'IBM Plex Mono', 'SF Mono', monospace";
 
 const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
+.theme-dark {
+  --bg-base: #0B0D11;
+  --bg-panel: #171A21;
+  --bg-readout: #0A0C10;
+  --hairline: #2A2E37;
+  --text-primary: #E8E6DE;
+  --text-muted: #8B8F99;
+  --brass: #C08A2E;
+  --brass-ink: #1A1200;
+  --teal: #4FD1C5;
+  --danger: #C0524A;
+  --teal-soft: rgba(79, 209, 197, 0.08);
+  --brass-soft: rgba(192, 138, 46, 0.10);
+  --scanline: rgba(255, 255, 255, 0.025);
+}
+.theme-light {
+  --bg-base: #F2F0EA;
+  --bg-panel: #FFFFFF;
+  --bg-readout: #FAF8F3;
+  --hairline: #D9D4C9;
+  --text-primary: #26241E;
+  --text-muted: #7C7768;
+  --brass: #9A6C12;
+  --brass-ink: #FFF9EC;
+  --teal: #0E7C74;
+  --danger: #AF443C;
+  --teal-soft: rgba(14, 124, 116, 0.08);
+  --brass-soft: rgba(154, 108, 18, 0.10);
+  --scanline: rgba(0, 0, 0, 0.02);
+}
+
 .chipBtn { transition: border-color 150ms ease, background-color 150ms ease, transform 100ms ease; }
-.chipBtn:hover { border-color: ${C.accentTeal}; }
+.chipBtn:hover { border-color: var(--teal); }
 .chipBtn:active { transform: scale(0.98); }
 
-.consoleInput { background: transparent; border: none; border-bottom: 1px solid ${C.hairline};
-  color: ${C.textPrimary}; font-family: ${FONT_MONO}; outline: none; width: 100%;
+.consoleInput { background: transparent; border: none; border-bottom: 1px solid var(--hairline);
+  color: var(--text-primary); font-family: ${FONT_MONO}; outline: none; width: 100%;
   padding: 8px 2px; font-size: 14px; }
-.consoleInput:focus { border-bottom-color: ${C.accentBrass}; }
-.consoleInput::placeholder { color: ${C.textMuted}; }
+.consoleInput:focus { border-bottom-color: var(--brass); }
+.consoleInput::placeholder { color: var(--text-muted); }
 
 .actionBtn { transition: transform 100ms ease, background-color 150ms ease, opacity 150ms ease; }
 .actionBtn:active:not(:disabled) { transform: scale(0.96); }
@@ -47,30 +77,35 @@ const GLOBAL_CSS = `
 .readoutPanel::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background-image: repeating-linear-gradient(to bottom,
-    rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px,
+    var(--scanline) 0px, var(--scanline) 1px,
     transparent 1px, transparent 3px);
 }
 
-.ghostBtn { background: transparent; border: 1px solid ${C.hairline}; border-radius: 6px;
-  color: ${C.textMuted}; font-family: ${FONT_SANS}; font-size: 11px; padding: 4px 10px;
+.ghostBtn { background: transparent; border: 1px solid var(--hairline); border-radius: 6px;
+  color: var(--text-muted); font-family: ${FONT_SANS}; font-size: 11px; padding: 4px 10px;
   cursor: pointer; display: flex; align-items: center; gap: 4px; transition: opacity 150ms ease, border-color 150ms ease, color 150ms ease; }
 .ghostBtn:hover { opacity: 0.75; }
-.ghostBtn.confirming { border-color: ${C.danger}; color: ${C.danger}; opacity: 1; }
-.ghostBtn.positive { border-color: ${C.accentTeal}; color: ${C.accentTeal}; opacity: 1; }
+.ghostBtn.confirming { border-color: var(--danger); color: var(--danger); opacity: 1; }
+.ghostBtn.positive { border-color: var(--teal); color: var(--teal); opacity: 1; }
+
+.iconBtn { background: transparent; border: 1px solid var(--hairline); border-radius: 6px;
+  color: var(--text-muted); padding: 5px 8px; cursor: pointer; display: flex; align-items: center; gap: 5px;
+  font-family: ${FONT_SANS}; font-size: 11px; transition: border-color 150ms ease, color 150ms ease; }
+.iconBtn:hover { border-color: var(--teal); color: var(--text-primary); }
+.iconBtn.active { border-color: var(--brass); color: var(--text-primary); }
 
 .historyRow { transition: border-color 150ms ease; cursor: pointer; }
-.historyRow:hover { border-color: ${C.accentTeal} !important; }
+.historyRow:hover { border-color: var(--teal) !important; }
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 `;
 
+const FONT_SIZES = { s: 12.5, m: 13.5, l: 15.5 };
+
 /* ============================================================
    Rich text rendering
-   - joins lines that begin with punctuation back to the previous line
-   - turns labeled section lines (結論／主要風險／反方觀點…) into bold + emoji
-   - renders **bold** properly instead of stripping it
    ============================================================ */
 const SECTION_EMOJI = {
   '結論': '🎯', '分析': '📊', '主要風險': '⚠️', '風險': '⚠️',
@@ -83,7 +118,6 @@ function preprocessText(t) {
     .replace(/```[a-zA-Z]*\n?/g, '')
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/^\s*[-—*_]{3,}\s*$/gm, '');
-  // Re-attach orphaned punctuation: a newline directly before ，。、；：）」』%
   s = s.replace(/\n+\s*([，。、；：）」』%])/g, '$1');
   s = s.replace(/\n{3,}/g, '\n\n');
   return s.trim();
@@ -93,7 +127,7 @@ function renderInline(str, keyBase) {
   const parts = String(str).split(/\*\*(.+?)\*\*/g);
   return parts.map((p, i) =>
     i % 2 === 1
-      ? <strong key={`${keyBase}-b${i}`} style={{ fontWeight: 700, color: C.textPrimary }}>{p}</strong>
+      ? <strong key={`${keyBase}-b${i}`} style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p}</strong>
       : <React.Fragment key={`${keyBase}-t${i}`}>{p}</React.Fragment>
   );
 }
@@ -151,7 +185,6 @@ function advisorPersonaSystem(personName, framework, todayStr) {
 - 若涉及即時行情或新聞，你有 web_search 工具，可以先查再答。`;
 }
 
-/* Lenses that apply to a single "target" (company/ticker), multi-selectable */
 const TARGET_LENSES = [
   {
     id: 'stock', label: '個股分析', icon: Search, group: 'data',
@@ -199,7 +232,6 @@ const ALLOCATION_BASE_LENS = {
 };
 const ALLOC_LENS_LOOKUP = [ALLOCATION_BASE_LENS, ...ADVISOR_LENSES];
 
-/* Ideas: structured JSON output so each idea becomes its own pinnable card */
 function ideasSystem(todayStr) {
   return `你是使用者的首席投資分析師。今天是${todayStr}。你有 web_search 工具，請先搜尋最新市場狀況再回答。
 任務：給 3 個具體的投資靈感（個股、產業或主題都可以）。
@@ -245,7 +277,6 @@ async function callClaudeOnce(system, userMsg) {
   return text;
 }
 
-/* Auto-retry on rate limits: waits 4s then 8s before giving up. */
 async function callClaude(system, userMsg) {
   const waits = [4000, 8000];
   for (let attempt = 0; ; attempt++) {
@@ -318,9 +349,38 @@ async function persistSavedIdeas(list) {
   try { await window.storage.set('saved_ideas', JSON.stringify(list)); } catch (e) {}
 }
 
+async function loadUiSettings() {
+  try {
+    const res = await window.storage.get('ui_settings');
+    return res && res.value ? JSON.parse(res.value) : null;
+  } catch (e) { return null; }
+}
+async function persistUiSettings(settings) {
+  try { await window.storage.set('ui_settings', JSON.stringify(settings)); } catch (e) {}
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise((resolve, reject) => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok ? resolve() : reject(new Error('copy failed'));
+    } catch (e) { reject(e); }
+  });
+}
+
 /* ============================================================
    Shared sequential multi-lens round runner
-   (one request at a time — the safest posture against concurrency limits)
    ============================================================ */
 function useLensRound() {
   const [round, setRound] = useState(null);
@@ -364,32 +424,34 @@ function useLensRound() {
 function ResultBlock({ status, text }) {
   if (status === 'loading') {
     return (
-      <span style={{ color: C.accentBrass, display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ color: 'var(--brass)', display: 'flex', alignItems: 'center', gap: 6 }}>
         <Loader2 size={13} className="spin" /> 查詢中，正在讀取即時資料
       </span>
     );
   }
   if (status === 'error') {
-    return <span style={{ color: C.danger }}>訊號中斷 — {text}</span>;
+    return <span style={{ color: 'var(--danger)' }}>訊號中斷 — {text}</span>;
   }
   return <RichText text={text} />;
 }
 
-function LensCheckbox({ lens, checked, onToggle, color }) {
+function LensCheckbox({ lens, checked, onToggle, tone }) {
   const Icon = lens.icon;
+  const color = tone === 'advisor' ? 'var(--brass)' : 'var(--teal)';
+  const soft = tone === 'advisor' ? 'var(--brass-soft)' : 'var(--teal-soft)';
   return (
     <button
       className="chipBtn"
       onClick={onToggle}
       style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8,
-        border: `1px solid ${checked ? color : C.hairline}`,
-        background: checked ? `${color}14` : 'transparent',
-        cursor: 'pointer', textAlign: 'left',
+        border: `1px solid ${checked ? color : 'var(--hairline)'}`,
+        background: checked ? soft : 'transparent',
+        cursor: 'pointer', textAlign: 'left', color: 'var(--text-primary)',
       }}
     >
-      <span style={{ width: 15, height: 15, borderRadius: 4, border: `1px solid ${checked ? color : C.hairline}`, background: checked ? color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {checked && <Check size={10} color={C.bgBase} />}
+      <span style={{ width: 15, height: 15, borderRadius: 4, border: `1px solid ${checked ? color : 'var(--hairline)'}`, background: checked ? color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        {checked && <Check size={10} color="var(--bg-base)" />}
       </span>
       <Icon size={16} style={{ color }} />
       <span style={{ fontSize: 13, fontFamily: FONT_SANS }}>{lens.label}</span>
@@ -406,14 +468,14 @@ function ResultsList({ round, lensLookup }) {
         if (!lens) return null;
         const r = round.results[id];
         const Icon = lens.icon;
-        const iconColor = lens.group === 'advisor' ? C.accentBrass : C.accentTeal;
+        const iconColor = lens.group === 'advisor' ? 'var(--brass)' : 'var(--teal)';
         return (
-          <div key={id} className="readoutPanel" style={{ background: C.bgReadout, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 16 }}>
+          <div key={id} className="readoutPanel" style={{ background: 'var(--bg-readout)', border: '1px solid var(--hairline)', borderRadius: 10, padding: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
               <Icon size={15} style={{ color: iconColor }} />
               <span style={{ fontFamily: FONT_SANS, fontWeight: 600, fontSize: 13 }}>{lens.label}</span>
             </div>
-            <div style={{ fontFamily: FONT_SANS, fontSize: 13.5, lineHeight: 1.8 }}>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 'var(--fs-body)', lineHeight: 1.8 }}>
               <ResultBlock status={r.status} text={r.text} />
             </div>
           </div>
@@ -437,6 +499,35 @@ const TABS = [
 export default function AnalystDashboard() {
   const [tab, setTab] = useState('market');
 
+  /* ui settings: theme + font size, persisted */
+  const [theme, setTheme] = useState('dark');
+  const [fontSize, setFontSize] = useState('m');
+  const settingsLoaded = useRef(false);
+
+  useEffect(() => {
+    loadUiSettings().then((s) => {
+      if (s) {
+        if (s.theme === 'dark' || s.theme === 'light') setTheme(s.theme);
+        if (FONT_SIZES[s.fontSize]) setFontSize(s.fontSize);
+      }
+      settingsLoaded.current = true;
+    });
+  }, []);
+  useEffect(() => {
+    if (settingsLoaded.current) persistUiSettings({ theme, fontSize });
+  }, [theme, fontSize]);
+
+  /* update instruction copy */
+  const [updateCopied, setUpdateCopied] = useState(false);
+  function handleCheckUpdate() {
+    copyToClipboard(UPDATE_INSTRUCTION)
+      .then(() => {
+        setUpdateCopied(true);
+        setTimeout(() => setUpdateCopied(false), 3000);
+      })
+      .catch(() => {});
+  }
+
   /* market — single-shot */
   const [marketState, setMarketState] = useState(null);
   async function runMarket() {
@@ -449,7 +540,7 @@ export default function AnalystDashboard() {
     }
   }
 
-  /* target + multi-select lenses (saved to history) */
+  /* target + multi-select lenses */
   const [target, setTarget] = useState('');
   const [selectedLenses, setSelectedLenses] = useState([]);
   const targetRound = useLensRound();
@@ -472,7 +563,7 @@ export default function AnalystDashboard() {
     setSelectedLenses([]);
   }
 
-  /* allocation checkup — base + optional advisors (not saved yet; Cowork later) */
+  /* allocation checkup */
   const [allocTarget, setAllocTarget] = useState('');
   const [selectedAllocAdvisors, setSelectedAllocAdvisors] = useState([]);
   const allocRound = useLensRound();
@@ -493,7 +584,7 @@ export default function AnalystDashboard() {
   }
 
   /* ideas — structured cards + pin/save */
-  const [ideasStatus, setIdeasStatus] = useState('idle'); // idle | loading | done | error
+  const [ideasStatus, setIdeasStatus] = useState('idle');
   const [ideasCards, setIdeasCards] = useState([]);
   const [ideasError, setIdeasError] = useState('');
   const [savedIdeas, setSavedIdeas] = useState(null);
@@ -530,7 +621,7 @@ export default function AnalystDashboard() {
 
   async function pinIdea(idea) {
     const current = savedIdeas || (await loadSavedIdeas());
-    if (current.some((s) => s.title === idea.title)) return; // already pinned
+    if (current.some((s) => s.title === idea.title)) return;
     const next = [{ ...idea, time: new Date().toISOString() }, ...current];
     setSavedIdeas(next);
     await persistSavedIdeas(next);
@@ -552,13 +643,13 @@ export default function AnalystDashboard() {
     setTab('target');
   }
 
-  /* history — two-level accordion: company → collapsed timestamps → content */
+  /* history — two-level accordion */
   const [historyIndex, setHistoryIndex] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [expandedSlug, setExpandedSlug] = useState(null);
   const [expandedData, setExpandedData] = useState({});
   const [expandedLoading, setExpandedLoading] = useState(null);
-  const [expandedRounds, setExpandedRounds] = useState({}); // { `${slug}#${idx}`: true }
+  const [expandedRounds, setExpandedRounds] = useState({});
   const [confirmingDelete, setConfirmingDelete] = useState(null);
 
   useEffect(() => {
@@ -585,11 +676,9 @@ export default function AnalystDashboard() {
     if (!expandedData[slug]) {
       setExpandedLoading(slug);
       const entry = await loadEntry(slug, fallbackTarget);
-      // refresh cache each open so newly saved rounds show up
       setExpandedData((prev) => ({ ...prev, [slug]: entry }));
       setExpandedLoading(null);
     } else {
-      // re-fetch in the background to pick up new rounds
       loadEntry(slug, fallbackTarget).then((entry) => {
         setExpandedData((prev) => ({ ...prev, [slug]: entry }));
       });
@@ -618,31 +707,65 @@ export default function AnalystDashboard() {
 
   /* ---------- render ---------- */
   const primaryBtn = {
-    background: C.accentBrass, color: C.accentBrassDark, border: 'none', borderRadius: 6,
+    background: 'var(--brass)', color: 'var(--brass-ink)', border: 'none', borderRadius: 6,
     padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 6,
     fontFamily: FONT_SANS, fontWeight: 600, fontSize: 13, cursor: 'pointer',
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bgBase, color: C.textPrimary, fontFamily: FONT_SANS, padding: '28px 20px', boxSizing: 'border-box' }}>
+    <div
+      className={theme === 'dark' ? 'theme-dark' : 'theme-light'}
+      style={{
+        minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)',
+        fontFamily: FONT_SANS, padding: '28px 20px', boxSizing: 'border-box',
+        '--fs-body': `${FONT_SIZES[fontSize]}px`,
+        transition: 'background-color 200ms ease, color 200ms ease',
+      }}
+    >
       <style>{GLOBAL_CSS}</style>
       <div style={{ maxWidth: 840, margin: '0 auto' }}>
 
         {/* header */}
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 2, color: C.accentTeal, textTransform: 'uppercase' }}>
-            分析儀表板 · 即時互動版
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 2, color: 'var(--teal)', textTransform: 'uppercase' }}>
+              分析儀表板 · {APP_VERSION}
+            </div>
+            <h1 style={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 26, margin: '6px 0 4px', letterSpacing: -0.3 }}>
+              首席分析師
+            </h1>
+            <p style={{ fontFamily: FONT_SANS, fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+              需在本人登入的 Claude 對話中使用；分享連結無法運作。
+            </p>
           </div>
-          <h1 style={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 26, margin: '6px 0 4px', letterSpacing: -0.3 }}>
-            首席分析師
-          </h1>
-          <p style={{ fontFamily: FONT_SANS, fontSize: 12, color: C.textMuted, margin: 0 }}>
-            此工具需要在你自己登入的 Claude 對話中即時使用；分享出去的連結可能無法運作。
-          </p>
+
+          {/* settings cluster */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <button className="iconBtn" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} title="切換深淺色">
+              {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
+              {theme === 'dark' ? '淺色' : '深色'}
+            </button>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[['s', '小'], ['m', '中'], ['l', '大']].map(([key, label]) => (
+                <button
+                  key={key}
+                  className={`iconBtn ${fontSize === key ? 'active' : ''}`}
+                  onClick={() => setFontSize(key)}
+                  title={`字體：${label}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button className={`iconBtn ${updateCopied ? 'active' : ''}`} onClick={handleCheckUpdate} title="複製更新指令，貼給 Claude 或 Cowork">
+              <RefreshCw size={13} />
+              {updateCopied ? '已複製，貼給 Cowork' : '檢查更新'}
+            </button>
+          </div>
         </div>
 
         {/* tabs */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderBottom: `1px solid ${C.hairline}`, marginBottom: 18 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderBottom: '1px solid var(--hairline)', marginBottom: 18 }}>
           {TABS.map((tItem) => {
             const Icon = tItem.icon;
             const active = tab === tItem.id;
@@ -652,8 +775,8 @@ export default function AnalystDashboard() {
                 className="tabBtn"
                 onClick={() => setTab(tItem.id)}
                 style={{
-                  color: active ? C.textPrimary : C.textMuted,
-                  borderBottom: `2px solid ${active ? C.accentBrass : 'transparent'}`,
+                  color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                  borderBottom: `2px solid ${active ? 'var(--brass)' : 'transparent'}`,
                   marginRight: 8,
                 }}
               >
@@ -676,7 +799,7 @@ export default function AnalystDashboard() {
               {marketState ? '重新查詢' : '查詢今日市場概況'}
             </button>
             {marketState && (
-              <div className="readoutPanel" style={{ marginTop: 14, background: C.bgReadout, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 16, fontFamily: FONT_SANS, fontSize: 13.5, lineHeight: 1.8 }}>
+              <div className="readoutPanel" style={{ marginTop: 14, background: 'var(--bg-readout)', border: '1px solid var(--hairline)', borderRadius: 10, padding: 16, fontFamily: FONT_SANS, fontSize: 'var(--fs-body)', lineHeight: 1.8 }}>
                 <ResultBlock status={marketState.status} text={marketState.text} />
               </div>
             )}
@@ -686,30 +809,30 @@ export default function AnalystDashboard() {
         {/* ============ TAB: 研究目標 ============ */}
         {tab === 'target' && (
           <div>
-            <div style={{ background: C.bgPanel, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 16 }}>
-              <label style={{ fontSize: 11, letterSpacing: 1, color: C.textMuted, fontFamily: FONT_MONO }}>研究目標</label>
+            <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--hairline)', borderRadius: 10, padding: 16 }}>
+              <label style={{ fontSize: 11, letterSpacing: 1, color: 'var(--text-muted)', fontFamily: FONT_MONO }}>研究目標</label>
               <input
                 className="consoleInput"
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
-                placeholder="例如：0050、台積電、Tesla"
+                placeholder="例如:0050、台積電、Tesla"
                 style={{ marginBottom: 14 }}
               />
 
-              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: C.accentTeal, marginBottom: 6 }}>分析角度</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: 'var(--teal)', marginBottom: 6 }}>分析角度</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2" style={{ marginBottom: 14 }}>
                 {TARGET_LENSES.filter((l) => l.group === 'data').map((lens) => (
-                  <LensCheckbox key={lens.id} lens={lens} checked={selectedLenses.includes(lens.id)} onToggle={() => toggleTargetLens(lens.id)} color={C.accentTeal} />
+                  <LensCheckbox key={lens.id} lens={lens} checked={selectedLenses.includes(lens.id)} onToggle={() => toggleTargetLens(lens.id)} tone="data" />
                 ))}
               </div>
 
-              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: C.accentBrass, marginBottom: 6 }}>顧問團</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: 'var(--brass)', marginBottom: 6 }}>顧問團</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2" style={{ marginBottom: 6 }}>
                 {ADVISOR_LENSES.map((lens) => (
-                  <LensCheckbox key={lens.id} lens={lens} checked={selectedLenses.includes(lens.id)} onToggle={() => toggleTargetLens(lens.id)} color={C.accentBrass} />
+                  <LensCheckbox key={lens.id} lens={lens} checked={selectedLenses.includes(lens.id)} onToggle={() => toggleTargetLens(lens.id)} tone="advisor" />
                 ))}
               </div>
-              <p style={{ fontSize: 11, color: C.textMuted, margin: '2px 0 14px' }}>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 14px' }}>
                 顧問視角為公開資料蒸餾的思維框架，不是本人真實想法。鏡頭會依序執行，勾越多等越久。
               </p>
 
@@ -721,7 +844,7 @@ export default function AnalystDashboard() {
                   style={primaryBtn}
                 >
                   {targetRound.isRunning ? (
-                    <><Loader2 size={14} className="spin" /> 分析中（{targetRound.completedCount}/{targetRound.round.lensIds.length} 完成）</>
+                    <><Loader2 size={14} className="spin" /> 分析中({targetRound.completedCount}/{targetRound.round.lensIds.length} 完成)</>
                   ) : (
                     <><Play size={14} /> 開始分析</>
                   )}
@@ -734,9 +857,9 @@ export default function AnalystDashboard() {
 
             {targetRound.round && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: C.textMuted }}>
-                  目標：<span style={{ color: C.textPrimary }}>{targetRound.round.target}</span>
-                  {!targetRound.isRunning && <span style={{ marginLeft: 8, color: C.accentTeal }}>已自動存檔</span>}
+                <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: 'var(--text-muted)' }}>
+                  目標:<span style={{ color: 'var(--text-primary)' }}>{targetRound.round.target}</span>
+                  {!targetRound.isRunning && <span style={{ marginLeft: 8, color: 'var(--teal)' }}>已自動存檔</span>}
                 </div>
                 <ResultsList round={targetRound.round} lensLookup={TARGET_LENSES} />
               </div>
@@ -747,24 +870,24 @@ export default function AnalystDashboard() {
         {/* ============ TAB: 配置健檢 ============ */}
         {tab === 'allocation' && (
           <div>
-            <div style={{ background: C.bgPanel, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 16 }}>
-              <label style={{ fontSize: 11, letterSpacing: 1, color: C.textMuted, fontFamily: FONT_MONO }}>目前配置（自由描述）</label>
+            <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--hairline)', borderRadius: 10, padding: 16 }}>
+              <label style={{ fontSize: 11, letterSpacing: 1, color: 'var(--text-muted)', fontFamily: FONT_MONO }}>目前配置(自由描述)</label>
               <input
                 className="consoleInput"
                 value={allocTarget}
                 onChange={(e) => setAllocTarget(e.target.value)}
-                placeholder="例如：60% 0050、30% 台積電、10% 現金"
+                placeholder="例如:60% 0050、30% 台積電、10% 現金"
                 style={{ marginBottom: 14 }}
               />
 
-              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: C.accentBrass, marginBottom: 6 }}>顧問團（可選，疊加意見）</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: 'var(--brass)', marginBottom: 6 }}>顧問團(可選，疊加意見)</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2" style={{ marginBottom: 6 }}>
                 {ADVISOR_LENSES.map((lens) => (
-                  <LensCheckbox key={lens.id} lens={lens} checked={selectedAllocAdvisors.includes(lens.id)} onToggle={() => toggleAllocAdvisor(lens.id)} color={C.accentBrass} />
+                  <LensCheckbox key={lens.id} lens={lens} checked={selectedAllocAdvisors.includes(lens.id)} onToggle={() => toggleAllocAdvisor(lens.id)} tone="advisor" />
                 ))}
               </div>
-              <p style={{ fontSize: 11, color: C.textMuted, margin: '2px 0 14px' }}>
-                此分頁目前不會存進歷史紀錄（等真正的本機檔案系統版本再做）。
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 14px' }}>
+                此分頁目前不會存進歷史紀錄(等真正的本機檔案系統版本再做)。
               </p>
 
               <div style={{ display: 'flex', gap: 8 }}>
@@ -775,7 +898,7 @@ export default function AnalystDashboard() {
                   style={primaryBtn}
                 >
                   {allocRound.isRunning ? (
-                    <><Loader2 size={14} className="spin" /> 健檢中（{allocRound.completedCount}/{allocRound.round.lensIds.length} 完成）</>
+                    <><Loader2 size={14} className="spin" /> 健檢中({allocRound.completedCount}/{allocRound.round.lensIds.length} 完成)</>
                   ) : (
                     <><Play size={14} /> 開始健檢</>
                   )}
@@ -788,8 +911,8 @@ export default function AnalystDashboard() {
 
             {allocRound.round && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: C.textMuted }}>
-                  配置：<span style={{ color: C.textPrimary }}>{allocRound.round.target}</span>
+                <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: 'var(--text-muted)' }}>
+                  配置:<span style={{ color: 'var(--text-primary)' }}>{allocRound.round.target}</span>
                 </div>
                 <ResultsList round={allocRound.round} lensLookup={ALLOC_LENS_LOOKUP} />
               </div>
@@ -811,12 +934,12 @@ export default function AnalystDashboard() {
             </button>
 
             {ideasStatus === 'loading' && (
-              <div style={{ marginTop: 14, color: C.accentBrass, fontFamily: FONT_SANS, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ marginTop: 14, color: 'var(--brass)', fontFamily: FONT_SANS, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Loader2 size={13} className="spin" /> 查詢中，正在讀取即時資料
               </div>
             )}
             {ideasStatus === 'error' && (
-              <div style={{ marginTop: 14, color: C.danger, fontFamily: FONT_SANS, fontSize: 13 }}>訊號中斷 — {ideasError}</div>
+              <div style={{ marginTop: 14, color: 'var(--danger)', fontFamily: FONT_SANS, fontSize: 13 }}>訊號中斷 — {ideasError}</div>
             )}
 
             {ideasStatus === 'done' && ideasCards.length > 0 && (
@@ -824,7 +947,7 @@ export default function AnalystDashboard() {
                 {ideasCards.map((idea, i) => {
                   const alreadyPinned = (savedIdeas || []).some((s) => s.title === idea.title);
                   return (
-                    <div key={i} className="readoutPanel" style={{ background: C.bgReadout, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 16 }}>
+                    <div key={i} className="readoutPanel" style={{ background: 'var(--bg-readout)', border: '1px solid var(--hairline)', borderRadius: 10, padding: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                         <div style={{ fontWeight: 700, fontSize: 15 }}>💡 {idea.title}</div>
                         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
@@ -840,9 +963,9 @@ export default function AnalystDashboard() {
                           </button>
                         </div>
                       </div>
-                      <div style={{ marginTop: 10, fontSize: 13.5, lineHeight: 1.8 }}>
-                        <div><span style={{ fontWeight: 700 }}>🎯 論點：</span>{idea.thesis}</div>
-                        <div style={{ marginTop: 6 }}><span style={{ fontWeight: 700 }}>⚠️ 風險：</span>{idea.risk}</div>
+                      <div style={{ marginTop: 10, fontSize: 'var(--fs-body)', lineHeight: 1.8 }}>
+                        <div><span style={{ fontWeight: 700 }}>🎯 論點:</span>{idea.thesis}</div>
+                        <div style={{ marginTop: 6 }}><span style={{ fontWeight: 700 }}>⚠️ 風險:</span>{idea.risk}</div>
                       </div>
                     </div>
                   );
@@ -850,19 +973,18 @@ export default function AnalystDashboard() {
               </div>
             )}
 
-            {/* saved ideas */}
             {savedIdeas && savedIdeas.length > 0 && (
               <div style={{ marginTop: 26 }}>
-                <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: C.accentTeal, marginBottom: 8 }}>
-                  📌 已存檔的靈感（{savedIdeas.length}）
+                <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: 'var(--teal)', marginBottom: 8 }}>
+                  📌 已存檔的靈感({savedIdeas.length})
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {savedIdeas.map((idea) => (
-                    <div key={idea.title} style={{ background: C.bgPanel, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 14 }}>
+                    <div key={idea.title} style={{ background: 'var(--bg-panel)', border: '1px solid var(--hairline)', borderRadius: 10, padding: 14 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 14 }}>💡 {idea.title}</div>
-                          <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: C.textMuted, marginTop: 2 }}>{formatDateTime(idea.time)}</div>
+                          <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{formatDateTime(idea.time)}</div>
                         </div>
                         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                           <button className="ghostBtn" onClick={() => researchIdea(idea.title)}>
@@ -872,13 +994,13 @@ export default function AnalystDashboard() {
                             className={`ghostBtn ${confirmingIdeaDelete === idea.title ? 'confirming' : ''}`}
                             onClick={() => deleteIdea(idea.title)}
                           >
-                            <Trash2 size={11} /> {confirmingIdeaDelete === idea.title ? '確定刪除？' : '刪除'}
+                            <Trash2 size={11} /> {confirmingIdeaDelete === idea.title ? '確定刪除?' : '刪除'}
                           </button>
                         </div>
                       </div>
-                      <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.75 }}>
-                        <div><span style={{ fontWeight: 700 }}>🎯 論點：</span>{idea.thesis}</div>
-                        <div style={{ marginTop: 4 }}><span style={{ fontWeight: 700 }}>⚠️ 風險：</span>{idea.risk}</div>
+                      <div style={{ marginTop: 8, fontSize: 'var(--fs-body)', lineHeight: 1.75 }}>
+                        <div><span style={{ fontWeight: 700 }}>🎯 論點:</span>{idea.thesis}</div>
+                        <div style={{ marginTop: 4 }}><span style={{ fontWeight: 700 }}>⚠️ 風險:</span>{idea.risk}</div>
                       </div>
                     </div>
                   ))}
@@ -892,12 +1014,12 @@ export default function AnalystDashboard() {
         {tab === 'history' && (
           <div>
             {historyLoading && (
-              <div style={{ color: C.textMuted, fontFamily: FONT_MONO, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ color: 'var(--text-muted)', fontFamily: FONT_MONO, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Loader2 size={14} className="spin" /> 讀取紀錄中
               </div>
             )}
             {!historyLoading && historyIndex && historyIndex.length === 0 && (
-              <div style={{ color: C.textMuted, fontFamily: FONT_MONO, fontSize: 13 }}>
+              <div style={{ color: 'var(--text-muted)', fontFamily: FONT_MONO, fontSize: 13 }}>
                 還沒有任何存檔——去「研究目標」分頁做一次研究，這裡就會出現。
               </div>
             )}
@@ -906,19 +1028,18 @@ export default function AnalystDashboard() {
               const entry = expandedData[item.slug];
               return (
                 <div key={item.slug} style={{ marginBottom: 10 }}>
-                  {/* level 1: company */}
                   <div
                     className="historyRow"
                     onClick={() => toggleExpand(item.slug, item.displayTarget)}
                     style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      background: C.bgPanel, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: '12px 14px',
+                      background: 'var(--bg-panel)', border: '1px solid var(--hairline)', borderRadius: 10, padding: '12px 14px',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <ChevronDown size={14} style={{ color: C.textMuted, transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
+                      <ChevronDown size={14} style={{ color: 'var(--text-muted)', transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
                       <span style={{ fontWeight: 600, fontSize: 14 }}>{item.displayTarget}</span>
-                      <span style={{ fontSize: 12, color: C.textMuted, fontFamily: FONT_MONO }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT_MONO }}>
                         {item.roundCount} 次分析 · 最近 {formatDateTime(item.lastTime)}
                       </span>
                     </div>
@@ -926,18 +1047,17 @@ export default function AnalystDashboard() {
                       className={`ghostBtn ${confirmingDelete === item.slug ? 'confirming' : ''}`}
                       onClick={(e) => { e.stopPropagation(); handleDelete(item.slug); }}
                     >
-                      <Trash2 size={11} /> {confirmingDelete === item.slug ? '確定刪除？' : '刪除'}
+                      <Trash2 size={11} /> {confirmingDelete === item.slug ? '確定刪除?' : '刪除'}
                     </button>
                   </div>
 
-                  {/* level 2: collapsed timestamps */}
                   {isOpen && (
-                    <div style={{ marginTop: 6, paddingLeft: 8, borderLeft: `2px solid ${C.hairline}` }}>
+                    <div style={{ marginTop: 6, paddingLeft: 8, borderLeft: '2px solid var(--hairline)' }}>
                       {expandedLoading === item.slug && (
-                        <div style={{ color: C.textMuted, fontSize: 12, padding: '8px 12px' }}>讀取中…</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: 12, padding: '8px 12px' }}>讀取中…</div>
                       )}
                       {entry && entry.rounds.length === 0 && (
-                        <div style={{ color: C.textMuted, fontSize: 12, padding: '8px 12px' }}>沒有紀錄。</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: 12, padding: '8px 12px' }}>沒有紀錄。</div>
                       )}
                       {entry && entry.rounds.map((rnd, origIdx) => ({ rnd, origIdx }))
                         .slice().reverse()
@@ -946,43 +1066,41 @@ export default function AnalystDashboard() {
                           const rOpen = !!expandedRounds[rKey];
                           return (
                             <div key={rKey} style={{ margin: '6px 0 6px 12px' }}>
-                              {/* collapsed timestamp row */}
                               <div
                                 className="historyRow"
                                 onClick={() => toggleRound(item.slug, origIdx)}
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 10,
-                                  background: C.bgReadout, border: `1px solid ${C.hairline}`, borderRadius: 8, padding: '10px 12px',
+                                  background: 'var(--bg-readout)', border: '1px solid var(--hairline)', borderRadius: 8, padding: '10px 12px',
                                 }}
                               >
-                                <ChevronDown size={12} style={{ color: C.textMuted, transform: rOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
-                                <span style={{ fontFamily: FONT_MONO, fontSize: 12, color: C.textPrimary }}>{formatDateTime(rnd.time)}</span>
+                                <ChevronDown size={12} style={{ color: 'var(--text-muted)', transform: rOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
+                                <span style={{ fontFamily: FONT_MONO, fontSize: 12, color: 'var(--text-primary)' }}>{formatDateTime(rnd.time)}</span>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                                   {rnd.lenses.map((id) => {
                                     const lens = TARGET_LENSES.find((l) => l.id === id);
                                     if (!lens) return null;
                                     const Icon = lens.icon;
-                                    return <Icon key={id} size={12} style={{ color: lens.group === 'advisor' ? C.accentBrass : C.accentTeal }} />;
+                                    return <Icon key={id} size={12} style={{ color: lens.group === 'advisor' ? 'var(--brass)' : 'var(--teal)' }} />;
                                   })}
                                 </span>
-                                <span style={{ fontSize: 11, color: C.textMuted, fontFamily: FONT_MONO }}>{rnd.lenses.length} 個鏡頭</span>
+                                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: FONT_MONO }}>{rnd.lenses.length} 個鏡頭</span>
                               </div>
 
-                              {/* expanded content */}
                               {rOpen && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6, marginLeft: 8 }}>
                                   {rnd.lenses.map((id) => {
                                     const lens = TARGET_LENSES.find((l) => l.id === id);
                                     if (!lens) return null;
                                     const Icon = lens.icon;
-                                    const iconColor = lens.group === 'advisor' ? C.accentBrass : C.accentTeal;
+                                    const iconColor = lens.group === 'advisor' ? 'var(--brass)' : 'var(--teal)';
                                     return (
-                                      <div key={id} style={{ padding: 12, background: C.bgPanel, borderRadius: 6 }}>
+                                      <div key={id} style={{ padding: 12, background: 'var(--bg-panel)', borderRadius: 6 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                                           <Icon size={13} style={{ color: iconColor }} />
                                           <span style={{ fontSize: 12, fontWeight: 600 }}>{lens.label}</span>
                                         </div>
-                                        <div style={{ fontFamily: FONT_SANS, fontSize: 13, lineHeight: 1.75, color: C.textPrimary }}>
+                                        <div style={{ fontFamily: FONT_SANS, fontSize: 'var(--fs-body)', lineHeight: 1.75, color: 'var(--text-primary)' }}>
                                           <RichText text={rnd.results[id]} />
                                         </div>
                                       </div>
