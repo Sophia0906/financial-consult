@@ -22,15 +22,22 @@
 
 | 顧問 | skill repo | 一鍵安裝 | 本地同步日期 |
 |------|-----------|---------|------------|
-| 芒格 | alchaincyf/munger-skill | `npx skills add alchaincyf/munger-skill` | 尚未安裝 |
-| 塔勒布 | alchaincyf/taleb-skill | `npx skills add alchaincyf/taleb-skill` | 尚未安裝 |
-| Naval | alchaincyf/naval-skill | `npx skills add alchaincyf/naval-skill` | 尚未安裝 |
+| 芒格 | alchaincyf/munger-skill | `npx skills add alchaincyf/munger-skill` | 2026-07-14（隨 financial-consult.plugin 一併打包安裝，skill 名稱為 munger-perspective）|
+| 塔勒布 | alchaincyf/taleb-skill | `npx skills add alchaincyf/taleb-skill` | 2026-07-14（隨 financial-consult.plugin 一併打包安裝，skill 名稱為 taleb-perspective）|
+| Naval | alchaincyf/naval-skill | `npx skills add alchaincyf/naval-skill` | 2026-07-14（隨 financial-consult.plugin 一併打包安裝，skill 名稱為 naval-perspective）|
 
 ## Cowork skill（本專案自製）
 
 | skill | 用途 | 版本 | 日期 |
 |-------|------|------|------|
-| financial-analyst | 分析標的並寫成本機 .md（一標的一檔累加），可呼叫上述 nuwa 顧問 skill | v1.0 | 2026-07-14 |
+| financial-analyst | 分析標的或做資產配置健檢，寫成本機 .md（累加），可呼叫上述 nuwa 顧問 skill | v1.1 | 2026-07-14 |
+
+v1.1 變更：新增「模式 B：配置健檢」——固定寫入 `analyses/配置健檢.md`（累加），每次都會
+讀取上一筆紀錄做「與上次比對」（配置有無變化、風險評分是否一致）；存檔流程改成裝置橋接
+感知，會先確認有沒有連到使用者電腦的「蒸餾你的投資顧問」資料夾，沒連就明講「還沒存進
+本機」。同時把 financial-analyst 與三個 nuwa 顧問 skill 一起打包成 Cowork plugin
+（`financial-consult.plugin`），透過 Cowork 的安裝按鈕正式安裝（比手動丟進
+`~/.claude/skills/` 更持久，不會因為容器重開而消失）。
 
 ---
 
