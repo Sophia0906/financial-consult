@@ -21,7 +21,7 @@ class Journal:
     def _iso(ts: float) -> str:
         return dt.datetime.fromtimestamp(ts, dt.timezone.utc).isoformat()
 
-    def log_fill(self, fill: Fill, reason: str) -> None:
+    def log_fill(self, fill: Fill, reason: str, evidence: dict | None = None) -> None:
         self._write({
             "type": "fill",
             "time": self._iso(fill.timestamp),
@@ -31,10 +31,19 @@ class Journal:
             "price": fill.fill_price,
             "fee": fill.fee,
             "reason": reason,
+            # 把判斷依據一起存下來,事後覆盤才知道當時憑什麼下這一單
+            "evidence": evidence or {},
         })
 
-    def log_rejection(self, symbol: str, reason: str, ts: float) -> None:
-        self._write({"type": "reject", "time": self._iso(ts), "symbol": symbol, "reason": reason})
+    def log_rejection(self, symbol: str, reason: str, ts: float,
+                      evidence: dict | None = None) -> None:
+        self._write({
+            "type": "reject",
+            "time": self._iso(ts),
+            "symbol": symbol,
+            "reason": reason,
+            "evidence": evidence or {},
+        })
 
     def log_equity(self, equity: float, cash: float, ts: float) -> None:
         self._write({"type": "equity", "time": self._iso(ts), "equity": equity, "cash": cash})

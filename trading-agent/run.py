@@ -21,7 +21,7 @@ from agent.data.feed import SyntheticFeed
 from agent.journal import Journal
 from agent.risk import RiskManager
 from agent.runner import Engine
-from agent.strategy.sma_cross import build_strategy
+from agent.strategy.registry import build_strategy
 
 
 def load_dotenv(path: Path) -> None:

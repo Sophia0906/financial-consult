@@ -16,6 +16,20 @@ class DataFeed(ABC):
         """依時間序吐出 K 線。實盤 feed 會阻塞等待下一根;回測 feed 跑完即止。"""
 
 
+class ListFeed(DataFeed):
+    """重播一段已經備妥的 K 線。
+
+    比較多個策略時用它:先把資料生成/下載一次,再讓每個策略跑「完全相同」的
+    那一份,績效差異才確定來自策略本身。
+    """
+
+    def __init__(self, bars: list[Bar]):
+        self._bars = bars
+
+    def bars(self, symbol: str) -> Iterator[Bar]:
+        return iter(self._bars)
+
+
 class SyntheticFeed(DataFeed):
     """幾何隨機走勢 + 週期項的合成 K 線,讓骨架完全離線也能跑通。
 

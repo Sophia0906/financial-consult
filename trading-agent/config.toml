@@ -10,9 +10,32 @@ initial_cash = 10000.0
 poll_interval_sec = 60
 
 [strategy]
+# 可選:sma_cross(雙均線)/ grid(網格機器人)/ rule_stack(多條件規則堆疊)
+# 下面的參數要跟著選定的策略換,換策略時把對應區塊取消註解即可。
+# 想先比較哪個適合你,跑 `python3 compare.py`。
 name = "sma_cross"
 fast_period = 10
 slow_period = 30
+
+# --- grid:網格機器人 ---
+# name = "grid"
+# grid_count = 10       # 區間切幾層
+# range_pct = 0.20      # 網格上下緣距中心價的比例
+# order_pct = 0.05      # 每層下單佔總權益比例
+
+# --- rule_stack:多條件規則堆疊(可解釋性最高)---
+# name = "rule_stack"
+# trend_period = 50     # 趨勢均線長度
+# rsi_period = 14
+# rsi_min = 45.0        # 進場動能下限
+# rsi_max = 72.0        # 進場動能上限(不追高)
+# rsi_exit = 82.0       # 過熱出場
+# max_atr_pct = 0.030   # 波動上限(ATR 佔價格比例)
+# stop_pct = 0.05       # 停損
+# trail_pct = 0.07      # 移動停利
+# cooldown_bars = 5     # 出場後冷卻幾根 K 線
+# exit_band_pct = 0.015 # 出場趨勢線的緩衝帶,防止貼著均線來回洗
+# order_pct = 0.10
 
 [risk]
 # 只允許交易白名單內的標的

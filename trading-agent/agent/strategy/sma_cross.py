@@ -1,7 +1,7 @@
 """範例策略:雙均線交叉。
 
 快線上穿慢線 => 買進建議;下穿 => 出場建議。
-這是教學用的最簡策略,實盤前請換成你自己驗證過的邏輯。
+最經典的入門策略,單一條件、無停損——放在比較表裡當「最陽春自建策略」的參照。
 """
 from __future__ import annotations
 
@@ -12,6 +12,10 @@ from agent.strategy.base import Strategy
 
 
 class SmaCross(Strategy):
+    """雙均線交叉:快線穿越慢線就換邊,單一條件無停損。"""
+
+    name = "sma_cross"
+
     def __init__(self, fast_period: int = 10, slow_period: int = 30):
         if fast_period >= slow_period:
             raise ValueError("fast_period 必須小於 slow_period")
@@ -34,27 +38,23 @@ class SmaCross(Strategy):
         if prev is None:
             return None
 
+        evidence = {
+            "價格": round(bar.close, 4),
+            f"SMA{self.fast_period}": round(fast, 4),
+            f"SMA{self.slow_period}": round(slow, 4),
+            "快慢線差": f"{prev:+.4f} → {diff:+.4f}",
+        }
+
         if prev <= 0 < diff:
             return Signal(
-                symbol=bar.symbol,
-                side=Side.BUY,
-                target_notional_pct=0.10,
+                symbol=bar.symbol, side=Side.BUY, target_notional_pct=0.10,
                 reason=f"SMA{self.fast_period} 上穿 SMA{self.slow_period}",
+                evidence=evidence,
             )
         if prev >= 0 > diff:
             return Signal(
-                symbol=bar.symbol,
-                side=Side.SELL,
-                target_notional_pct=1.0,  # 出場:全數賣出,實際數量由風控/broker 依持倉決定
+                symbol=bar.symbol, side=Side.SELL, target_notional_pct=1.0,
                 reason=f"SMA{self.fast_period} 下穿 SMA{self.slow_period}",
+                evidence=evidence,
             )
         return None
-
-
-def build_strategy(name: str, params: dict) -> Strategy:
-    if name == "sma_cross":
-        return SmaCross(
-            fast_period=int(params.get("fast_period", 10)),
-            slow_period=int(params.get("slow_period", 30)),
-        )
-    raise ValueError(f"未知策略: {name!r}")

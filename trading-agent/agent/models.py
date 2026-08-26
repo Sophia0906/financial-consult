@@ -32,6 +32,10 @@ class Signal:
     # 想動用的資金比例(佔目前總權益),風控可再往下砍
     target_notional_pct: float
     reason: str
+    # 判斷依據:策略把「我為什麼這樣決定」攤開來,寫進日誌也能印在終端機。
+    # 慣例:key "checks" 放逐條規則檢核 [{name, passed, actual, threshold}],
+    # 其餘 key 放輔助數值。內容必須可 JSON 序列化。
+    evidence: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
