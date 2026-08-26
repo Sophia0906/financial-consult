@@ -1,0 +1,4 @@
+.env
+journal/
+__pycache__/
+*.pyc
