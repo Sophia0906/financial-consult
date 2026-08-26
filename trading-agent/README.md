@@ -50,11 +50,25 @@ trading-agent/
 
 ```bash
 cd trading-agent
+python3 demo_10k.py                       # 拿 10,000 美金,一筆一筆看 agent 怎麼動用
 python3 compare.py                        # 四方 PK:抱著不動 vs 網格 vs 雙均線 vs 規則堆疊
 python3 compare.py --explain rule_stack   # 逐筆看「它為什麼買、為什麼賣」
 python3 backtest.py                       # 單一策略回測 + 完整績效
 python3 run.py --mode paper --feed synthetic   # 模擬盤迴圈(Ctrl+C 停止)
 ```
+
+## agent 和「策略」不是同一件事
+
+這是最容易搞混的地方:
+
+- **agent** 是整台機器:收行情 → 產生訊號 → 風控裁決 → 下單 → 記帳。只有一台。
+- **策略**(sma_cross / grid / rule_stack)是可以抽換的「腦袋」,決定什麼時候買賣。
+
+換策略不用改 agent,就像同一台車換不同駕駛。`config.toml` 改一行 `name = "..."`
+就換掉腦袋,風控、下單、日誌完全不動。
+
+`demo_10k.py` 把這件事變具體:同一筆 10,000 美金、同一段行情,只換腦袋,
+逐筆列出它買了多少、花掉多少、剩多少現金、總資產變多少。
 
 ## 看得見的買賣邏輯
 

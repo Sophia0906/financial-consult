@@ -16,7 +16,6 @@
 from __future__ import annotations
 
 import argparse
-import unicodedata
 
 from agent.config import RiskConfig, load_config
 from agent.brokers.paper import PaperBroker
@@ -27,6 +26,7 @@ from agent.models import Bar
 from agent.risk import RiskManager
 from agent.runner import Engine
 from agent.strategy.registry import build_strategy
+from agent.textui import table
 
 # 比較用的風控:比 config.toml 寬鬆,避免各策略被同一道上限削平而看不出差異
 COMPARE_RISK = RiskConfig(
@@ -46,28 +46,6 @@ CONTENDERS: list[tuple[str, dict, str]] = [
 ]
 
 BAR_SECONDS = 3600.0
-
-
-# ---------- 中日韓字寬度對齊 ----------
-
-def _width(text: str) -> int:
-    return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in text)
-
-
-def _pad(text: str, width: int, align: str = "left") -> str:
-    gap = " " * max(0, width - _width(text))
-    return gap + text if align == "right" else text + gap
-
-
-def _table(headers: list[str], rows: list[list[str]]) -> str:
-    widths = [max(_width(h), *(_width(r[i]) for r in rows)) if rows else _width(h)
-              for i, h in enumerate(headers)]
-    aligns = ["left"] + ["right"] * (len(headers) - 1)
-    lines = ["  ".join(_pad(h, widths[i], aligns[i]) for i, h in enumerate(headers))]
-    lines.append("  ".join("─" * w for w in widths))
-    for row in rows:
-        lines.append("  ".join(_pad(c, widths[i], aligns[i]) for i, c in enumerate(row)))
-    return "\n".join(lines)
 
 
 # ---------- 執行 ----------
@@ -141,7 +119,7 @@ def main() -> None:
               f"{'=' * 60}")
         metrics, summary = run_one(name, params, bars, args.symbol, cfg, explain=True)
         print(f"\n{'=' * 60}")
-        print(_table(headers, [format_row(metrics, note)]))
+        print(table(headers, [format_row(metrics, note)]))
         if summary:
             print("\n沒進場的原因統計(調參的第一線索):")
             for key, count in summary.items():
@@ -218,7 +196,7 @@ def main() -> None:
                 note,
             ])
 
-    print(_table(headers, rows))
+    print(table(headers, rows))
 
     for name, summary in summaries.items():
         print(f"\n{name} 的自我說明:")
