@@ -1,0 +1,56 @@
+# 交易 agent 設定檔。API key 一律放 .env,不放這裡。
+
+[general]
+# paper = 本機模擬成交 / testnet = 交易所測試網真 API 假錢 / live = 真錢
+# live 另外還需要環境變數 TRADING_AGENT_ARM_LIVE=1 才會生效(雙開關防呆)
+mode = "paper"
+# 起始資金(paper 模式用;單位視市場而定,加密貨幣為 USDT)
+initial_cash = 10000.0
+# 輪詢間隔秒數(run.py 用)
+poll_interval_sec = 60
+
+[strategy]
+# 可選:sma_cross(雙均線)/ grid(網格機器人)/ rule_stack(多條件規則堆疊)
+# 下面的參數要跟著選定的策略換,換策略時把對應區塊取消註解即可。
+# 想先比較哪個適合你,跑 `python3 compare.py`。
+name = "sma_cross"
+fast_period = 10
+slow_period = 30
+
+# --- grid:網格機器人 ---
+# name = "grid"
+# grid_count = 10       # 區間切幾層
+# range_pct = 0.20      # 網格上下緣距中心價的比例
+# order_pct = 0.05      # 每層下單佔總權益比例
+
+# --- rule_stack:多條件規則堆疊(可解釋性最高)---
+# name = "rule_stack"
+# trend_period = 50     # 趨勢均線長度
+# rsi_period = 14
+# rsi_min = 45.0        # 進場動能下限
+# rsi_max = 72.0        # 進場動能上限(不追高)
+# rsi_exit = 82.0       # 過熱出場
+# max_atr_pct = 0.030   # 波動上限(ATR 佔價格比例)
+# stop_pct = 0.05       # 停損
+# trail_pct = 0.07      # 移動停利
+# cooldown_bars = 5     # 出場後冷卻幾根 K 線
+# exit_band_pct = 0.015 # 出場趨勢線的緩衝帶,防止貼著均線來回洗
+# order_pct = 0.10
+
+[risk]
+# 只允許交易白名單內的標的
+symbol_whitelist = ["BTC/USDT", "ETH/USDT"]
+# 單一標的持倉市值佔總權益上限
+max_position_pct = 0.20
+# 單筆訂單名目金額佔總權益上限
+max_order_pct = 0.10
+# 當日虧損達總權益此比例 => 熔斷:當日拒絕所有新開倉,只允許出場
+max_daily_loss_pct = 0.03
+# 下單時替手續費與滑價預留的現金比例(避免滿倉單因付不出成本而被拒)
+cost_buffer_pct = 0.01
+
+[fees]
+# 模擬手續費率(paper/回測用;Binance 現貨吃單約 0.1%)
+taker_fee_rate = 0.001
+# 模擬滑價(市價單成交價相對收盤價的偏移)
+slippage_rate = 0.0005
