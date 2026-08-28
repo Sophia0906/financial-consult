@@ -46,6 +46,8 @@ max_position_pct = 0.20
 max_order_pct = 0.10
 # 當日虧損達總權益此比例 => 熔斷:當日拒絕所有新開倉,只允許出場
 max_daily_loss_pct = 0.03
+# 下單時替手續費與滑價預留的現金比例(避免滿倉單因付不出成本而被拒)
+cost_buffer_pct = 0.01
 
 [fees]
 # 模擬手續費率(paper/回測用;Binance 現貨吃單約 0.1%)

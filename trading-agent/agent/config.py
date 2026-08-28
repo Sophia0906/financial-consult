@@ -15,6 +15,9 @@ class RiskConfig:
     max_position_pct: float
     max_order_pct: float
     max_daily_loss_pct: float
+    # 下單時替手續費與滑價預留的現金比例。沒有這個緩衝,一張用掉 100% 現金的
+    # 買單在成交時會因為付不出手續費而被拒絕——實盤與模擬盤都一樣。
+    cost_buffer_pct: float = 0.01
 
 
 @dataclass(frozen=True)
@@ -55,6 +58,7 @@ def load_config(path: str | Path | None = None) -> Config:
             max_position_pct=float(raw["risk"]["max_position_pct"]),
             max_order_pct=float(raw["risk"]["max_order_pct"]),
             max_daily_loss_pct=float(raw["risk"]["max_daily_loss_pct"]),
+            cost_buffer_pct=float(raw["risk"].get("cost_buffer_pct", 0.01)),
         ),
         taker_fee_rate=float(raw["fees"]["taker_fee_rate"]),
         slippage_rate=float(raw["fees"]["slippage_rate"]),

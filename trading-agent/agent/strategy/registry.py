@@ -3,12 +3,14 @@ from __future__ import annotations
 
 from agent.strategy.base import Strategy
 from agent.strategy.grid import GridBot
+from agent.strategy.mean_reversion import MeanReversion
 from agent.strategy.rule_stack import RuleStack
 from agent.strategy.sma_cross import SmaCross
 
 STRATEGIES: dict[str, type[Strategy]] = {
     SmaCross.name: SmaCross,
     GridBot.name: GridBot,
+    MeanReversion.name: MeanReversion,
     RuleStack.name: RuleStack,
 }
 

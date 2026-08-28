@@ -19,7 +19,7 @@ import argparse
 
 from agent.config import RiskConfig, load_config
 from agent.brokers.paper import PaperBroker
-from agent.data.feed import ListFeed, SyntheticFeed
+from agent.data.feed import REGIME_LABELS, REGIMES, ListFeed, SyntheticFeed
 from agent.journal import Journal
 from agent.metrics import Metrics
 from agent.models import Bar
@@ -28,22 +28,31 @@ from agent.runner import Engine
 from agent.strategy.registry import build_strategy
 from agent.textui import table
 
-# 比較用的風控:比 config.toml 寬鬆,避免各策略被同一道上限削平而看不出差異
+# 比較用的風控:刻意幾乎解除上限,讓各策略在有訊號時都能滿倉。
+# 目的是比較「策略邏輯本身」,而不是比較誰被風控卡得比較少;
+# 這樣報酬也才和「買進抱著」同一個量級,可以直接對照。
+# 真實部署請用 config.toml 裡保守得多的設定(單筆 10%、持倉 20%)。
 COMPARE_RISK = RiskConfig(
     symbol_whitelist=("BTC/USDT",),
-    max_position_pct=0.60,
-    max_order_pct=0.20,
-    max_daily_loss_pct=0.50,
+    max_position_pct=1.0,
+    max_order_pct=1.0,
+    max_daily_loss_pct=0.99,
+    cost_buffer_pct=0.01,
 )
 
 # 參賽者:名稱 -> (策略代號, 參數, 中文說明)
 CONTENDERS: list[tuple[str, dict, str]] = [
-    ("grid", {"grid_count": 10, "range_pct": 0.20, "order_pct": 0.05},
+    ("grid", {"grid_count": 10, "range_pct": 0.20, "order_pct": 0.10},
      "現成機器人代表"),
     ("sma_cross", {"fast_period": 10, "slow_period": 30},
      "最陽春的自建策略"),
+    ("mean_reversion", {}, "低買高賣(跌了買、漲了賣)"),
+    ("mean_rev_nostop", {}, "低買高賣但不停損"),
     ("rule_stack", {}, "多條件過濾 + 停損停利"),
 ]
+
+# 別名:同一個策略換參數,用來示範「不停損的低買高賣」在下跌行情的死法
+ALIASES = {"mean_rev_nostop": ("mean_reversion", {"stop_pct": 9.99})}
 
 BAR_SECONDS = 3600.0
 
@@ -52,7 +61,8 @@ BAR_SECONDS = 3600.0
 
 def run_one(name: str, params: dict, bars: list[Bar], symbol: str,
             cfg, explain: bool) -> tuple[Metrics, dict[str, int]]:
-    strategy = build_strategy(name, params)
+    real_name, real_params = ALIASES.get(name, (name, params))
+    strategy = build_strategy(real_name, real_params)
     broker = PaperBroker(cfg.initial_cash, cfg.taker_fee_rate, cfg.slippage_rate)
     engine = Engine(
         strategy=strategy,
@@ -64,6 +74,50 @@ def run_one(name: str, params: dict, bars: list[Bar], symbol: str,
     )
     engine.run(ListFeed(bars), symbol)
     return engine.metrics(label=name, bar_seconds=BAR_SECONDS), strategy.explain_summary()
+
+
+def make_bars(args, seed: int, regime: str) -> list[Bar]:
+    """產生一段行情。起始價設成接近真實 BTC 的量級,數量看起來才有感覺。"""
+    return list(SyntheticFeed(n_bars=args.bars, start_price=100_000.0,
+                              seed=seed, regime=regime).bars(args.symbol))
+
+
+def print_regime_matrix(args, cfg) -> None:
+    """「策略 × 行情」報酬矩陣——回答「到底該追漲殺跌還是低買高賣」的唯一誠實方式。"""
+    seeds = [args.seed + i for i in range(max(args.seeds, 3))]
+    print(f"每格 = {len(seeds)} 組亂數的平均報酬,各 {args.bars} 根 K 線\n")
+
+    matrix: dict[str, dict[str, float]] = {}
+    market: dict[str, float] = {}
+    for regime in REGIMES:
+        hold_returns, per_strategy = [], {}
+        for seed in seeds:
+            bars = make_bars(args, seed, regime)
+            hold_returns.append(buy_and_hold(bars, cfg).total_return)
+            for name, params, _ in CONTENDERS:
+                m, _ = run_one(name, params, bars, args.symbol, cfg, explain=False)
+                per_strategy.setdefault(name, []).append(m.total_return)
+        market[regime] = sum(hold_returns) / len(hold_returns)
+        for name, rets in per_strategy.items():
+            matrix.setdefault(name, {})[regime] = sum(rets) / len(rets)
+
+    headers = ["策略"] + [REGIME_LABELS[r] for r in REGIMES]
+    rows = [["買進抱著(=行情本身)"] + [f"{market[r]:+.1%}" for r in REGIMES]]
+    for name, _, note in CONTENDERS:
+        rows.append([f"{name}", *[f"{matrix[name][r]:+.1%}" for r in REGIMES]])
+    print(table(headers, rows))
+
+    print("\n每個策略在幹嘛:")
+    for name, _, note in CONTENDERS:
+        print(f"  · {name}:{note}")
+
+    print("""
+怎麼讀這張表:
+  · 追漲殺跌(sma_cross / rule_stack)在單邊行情吃得到肉,震盪盤被上下巴。
+  · 低買高賣(grid / mean_reversion)在震盪盤穩定收租,單邊上漲太早下車,
+    單邊下跌則是一路接刀——看 mean_rev_nostop 那格,不停損的代價全在那裡。
+  · 沒有哪一種永遠對。真正的問題不是「哪個策略好」,
+    而是「我現在面對的是哪種行情,以及我猜錯的時候賠得起嗎」。""")
 
 
 def buy_and_hold(bars: list[Bar], cfg) -> Metrics:
@@ -103,6 +157,9 @@ def main() -> None:
                         help="跑幾組不同亂數的資料(>1 時輸出平均,檢查策略穩不穩)")
     parser.add_argument("--explain", metavar="策略代號",
                         help="逐筆印出該策略的判斷依據,其他策略不跑")
+    parser.add_argument("--regime", default="cycle",
+                        choices=[*REGIMES, "all"],
+                        help="行情型態;all 會輸出「策略 × 行情」的報酬矩陣")
     args = parser.parse_args()
 
     cfg = load_config()
@@ -114,7 +171,7 @@ def main() -> None:
             raise SystemExit(f"找不到策略 {args.explain!r};可選:"
                              + "、".join(c[0] for c in CONTENDERS))
         name, params, note = entry
-        bars = list(SyntheticFeed(n_bars=args.bars, seed=args.seed).bars(args.symbol))
+        bars = make_bars(args, args.seed, args.regime)
         print(f"逐筆判斷過程:{name}({note}),{len(bars)} 根 K 線\n"
               f"{'=' * 60}")
         metrics, summary = run_one(name, params, bars, args.symbol, cfg, explain=True)
@@ -124,6 +181,10 @@ def main() -> None:
             print("\n沒進場的原因統計(調參的第一線索):")
             for key, count in summary.items():
                 print(f"  · {key}:{count} 次")
+        return
+
+    if args.regime == "all":
+        print_regime_matrix(args, cfg)
         return
 
     seeds = [args.seed + i for i in range(args.seeds)]
@@ -137,7 +198,7 @@ def main() -> None:
     hold_runs: list[Metrics] = []
 
     for seed in seeds:
-        bars = list(SyntheticFeed(n_bars=args.bars, seed=seed).bars(args.symbol))
+        bars = make_bars(args, seed, args.regime)
         hold_runs.append(buy_and_hold(bars, cfg))
         for name, params, _ in CONTENDERS:
             metrics, summary = run_one(name, params, bars, args.symbol, cfg, explain=False)

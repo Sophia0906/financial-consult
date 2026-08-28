@@ -51,7 +51,7 @@ class RuleStack(Strategy):
                  rsi_min: float = 45.0, rsi_max: float = 72.0, rsi_exit: float = 82.0,
                  max_atr_pct: float = 0.030, stop_pct: float = 0.05,
                  trail_pct: float = 0.07, cooldown_bars: int = 5,
-                 exit_band_pct: float = 0.015, order_pct: float = 0.10):
+                 exit_band_pct: float = 0.015, order_pct: float = 1.0):
         self.trend_period = trend_period
         self.rsi_period = rsi_period
         self.atr_period = atr_period

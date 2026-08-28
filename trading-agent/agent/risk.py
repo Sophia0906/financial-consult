@@ -5,6 +5,7 @@
 - 單筆訂單名目金額 <= 總權益 * max_order_pct
 - 買進後單一標的持倉市值 <= 總權益 * max_position_pct
 - 當日虧損達 max_daily_loss_pct => 熔斷,拒絕所有新開倉(仍允許賣出出場)
+- 買單額外扣掉 cost_buffer_pct,確保成交時付得出手續費與滑價
 """
 from __future__ import annotations
 
@@ -69,8 +70,10 @@ class RiskManager:
         notional = min(notional, room)
         if notional <= 0:
             return None, f"拒絕:{signal.symbol} 持倉已達上限 {self.cfg.max_position_pct:.0%}"
-        if notional > portfolio.cash:
-            notional = portfolio.cash
+        # 預留手續費與滑價的空間:買單不能把現金用到一毛不剩,
+        # 否則成交時付不出成本,整張單會被 broker 拒絕。
+        affordable = portfolio.cash / (1 + self.cfg.cost_buffer_pct)
+        notional = min(notional, affordable)
         if notional <= 0:
             return None, "拒絕:現金不足"
 

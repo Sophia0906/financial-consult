@@ -16,11 +16,14 @@ class SmaCross(Strategy):
 
     name = "sma_cross"
 
-    def __init__(self, fast_period: int = 10, slow_period: int = 30):
+    def __init__(self, fast_period: int = 10, slow_period: int = 30,
+                 order_pct: float = 1.0):
         if fast_period >= slow_period:
             raise ValueError("fast_period 必須小於 slow_period")
         self.fast_period = fast_period
         self.slow_period = slow_period
+        # 策略只表達「想投入多少」,真正的部位大小由 RiskManager 依上限裁決
+        self.order_pct = order_pct
         self._closes: dict[str, deque[float]] = {}
         self._prev_diff: dict[str, float] = {}
 
@@ -47,7 +50,7 @@ class SmaCross(Strategy):
 
         if prev <= 0 < diff:
             return Signal(
-                symbol=bar.symbol, side=Side.BUY, target_notional_pct=0.10,
+                symbol=bar.symbol, side=Side.BUY, target_notional_pct=self.order_pct,
                 reason=f"SMA{self.fast_period} 上穿 SMA{self.slow_period}",
                 evidence=evidence,
             )
